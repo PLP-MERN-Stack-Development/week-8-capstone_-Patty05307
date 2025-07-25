@@ -1,0 +1,140 @@
+   <%-include ('../includes/head.ejs') %>
+  <main class="container mx-auto py-8">
+    <h1 class="text-3xl font-bold text-center text-blue-900 mb-8">Our Technicians</h1>
+
+    <!-- Search Input -->
+    <div class="mb-8 flex justify-center items-center gap-4">
+      <input 
+        type="text" 
+        id="searchInput" 
+        placeholder="Search by name, skill, or location..." 
+        class="w-full max-w-md p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+      >
+      <button onclick="filterTechnicians()" class="bg-blue-900 text-white px-4 py-2 rounded hover:bg-blue-800">
+        Search
+      </button>
+    </div>
+
+    <!-- Search Results Container -->
+    <div id="searchResults" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 hidden"></div>
+
+    <!-- Original Technician List -->
+    <div id="originalTechnicians">
+      <% if (technicians.length === 0) { %>
+        <p class="text-center text-gray-600">No technicians found.</p>
+      <% } else { %>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <% technicians.forEach(technician => { %>
+            <div class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition">
+              <h2 class="text-xl font-semibold text-blue-900"><%= technician.name %></h2>
+              <p class="text-gray-600 mt-2">Primary Skill: <%= technician.primarySkill %></p>
+              <p class="text-gray-600 mt-1">Other Skills: <%= technician.otherSkills || 'None' %></p>
+              <p class="text-gray-600 mt-1">Location: <%= technician.location %></p>
+              <p class="text-gray-600 mt-1">Phone: <%= technician.phone || 'Not provided' %></p>
+               <p class="text-gray-600 mt-1">Email: <%= technician.email || 'Not provided' %></p>
+              <p class="text-gray-600 mt-1">Experience: <%= technician.experienceYears || 0 %> years</p>
+              <p class="text-gray-600 mt-1">Availability: <%= technician.availability || 'Not specified' %></p>
+              <p class="text-gray-600 mt-2"><%= technician.about || 'No description provided' %></p>
+              <!-- <button 
+                onclick="deleteTechnician(<%= technician.id %>)" 
+                class="mt-3 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+              >
+                Delete
+              </button> -->
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+  </main>
+
+  <!-- JavaScript -->
+  <script>
+    async function filterTechnicians() {
+      const query = document.getElementById('searchInput').value.trim();
+      const results = document.getElementById('searchResults');
+      const original = document.getElementById('originalTechnicians');
+
+      // If input is cleared, restore original technicians
+      if (!query) {
+        results.classList.add('hidden');
+        results.innerHTML = '';
+        original.classList.remove('hidden');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/technician?query=${encodeURIComponent(query)}`);
+
+        if (!res.ok) {
+          results.innerHTML = '<p class="text-center text-gray-500 col-span-full">No technicians found.</p>';
+        } else {
+          const technicians = await res.json();
+
+          const cards = technicians.map(technician => `
+            <div class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition">
+              <h2 class="text-xl font-semibold text-blue-900">${technician.name}</h2>
+              <p class="text-gray-600 mt-2">Primary Skill: ${technician.primarySkill}</p>
+              <p class="text-gray-600 mt-1">Other Skills: ${technician.otherSkills || 'None'}</p>
+              <p class="text-gray-600 mt-1">Location: ${technician.location}</p>
+              <p class="text-gray-600 mt-1">Phone: ${technician.phone || 'Not provided'}</p>
+              <p class="text-gray-600 mt-1">Experience: ${technician.experienceYears || 0} years</p>
+              <p class="text-gray-600 mt-1">Availability: ${technician.availability || 'Not specified'}</p>
+              <p class="text-gray-600 mt-2">${technician.about || 'No description provided'}</p>
+             
+            </div>
+          `).join('');
+
+          results.innerHTML = cards;
+        }
+
+        // Show search results, hide original list
+        original.classList.add('hidden');
+        results.classList.remove('hidden');
+
+      } catch (err) {
+        console.error(err);
+        results.innerHTML = '<p class="text-center text-red-600">Error fetching technicians</p>';
+        results.classList.remove('hidden');
+        original.classList.add('hidden');
+      }
+    }
+
+    async function deleteTechnician(id) {
+      if (confirm('Are you sure you want to delete this technician?')) {
+        try {
+          const res = await fetch(`/technicians/${id}`, {
+            method: 'DELETE'
+          });
+
+          if (!res.ok) {
+            alert('Failed to delete technician');
+            return;
+          }
+
+          // Refresh the page to show updated list
+          window.location.reload();
+        } catch (err) {
+          console.error('Error deleting technician:', err);
+          alert('Error deleting technician');
+        }
+      }
+    }
+
+    // Listen for Enter key
+    document.getElementById('searchInput').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') filterTechnicians();
+    });
+
+    // Reset if input is cleared
+    document.getElementById('searchInput').addEventListener('input', function () {
+      if (this.value.trim() === '') {
+        document.getElementById('searchResults').innerHTML = '';
+        document.getElementById('searchResults').classList.add('hidden');
+        document.getElementById('originalTechnicians').classList.remove('hidden');
+      }
+    });
+  </script>
+
+
+  <%- include('../includes/end.ejs') %>
