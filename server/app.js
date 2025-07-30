@@ -1,45 +1,30 @@
-const connectDB = require('./utils/database');
+// server/app.js
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const connectDB = require("./utils/database");
 
-require('dotenv').config();
-const express = require('express');
+dotenv.config();
+
 const app = express();
-const bodyParser = require('body-parser');
-const path = require('path');
-
-// Middleware
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// View engine
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-
-// Routes
-const adminRoutes = require('./routes/main');
-app.use(adminRoutes);
-
-// Sequelize DB connection
-const sequelize = require('./utils/database');
-
-// Port
 const PORT = process.env.PORT || 3300;
 
-// Connect to DB and start server
+// Middlewares
+app.use(cors());
+app.use(express.json());
+
+// Routes
+app.use("/api/posts", require("./routes/postRoutes")); // Example route
+
+// Connect DB and start server
 (async () => {
   try {
-    await sequelize.authenticate();
-    console.log('✅ Connected to PostgreSQL');
-
-    await sequelize.sync({ alter: true });
-    console.log('✅ Tables synced');
-
-   connectDB();
+    await connectDB();
 
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
   } catch (error) {
-    console.error('❌ DB Connection Failed:', error);
+    console.error("❌ DB Connection Failed:", error);
   }
 })();
