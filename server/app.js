@@ -1,3 +1,5 @@
+const connectDB = require('./utils/database');
+
 require('dotenv').config();
 const express = require('express');
 const app = express();
@@ -31,6 +33,8 @@ const PORT = process.env.PORT || 3300;
 
     await sequelize.sync({ alter: true });
     console.log('✅ Tables synced');
+
+   connectDB();
 
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
